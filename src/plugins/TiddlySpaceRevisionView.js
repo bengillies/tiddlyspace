@@ -73,6 +73,11 @@ var me = config.macros.viewRevisions = {
 				_onclick.apply(this, arguments);
 			});
 		});
+		var _dblclick = tiddlerElem.ondblclick;
+		$(tiddlerElem).dblclick(function() {
+			me.closeRevisions(tiddlerElem);
+			_dblclick.apply(this, arguments);
+		});
 		var type = tiddler.fields["server.type"];
 		var adaptor = new config.adaptors[type]();
 		var userParams = {
