@@ -25,13 +25,13 @@ from tiddlywebplugins.tiddlyspace.handler import (home, safe_mode,
         friendly_uri, get_identities)
 from tiddlywebplugins.tiddlyspace.spaces import (
         add_spaces_routes, change_space_member)
-from tiddlywebplugins.tiddlyspace.csrf import CsrfProtector
+from tiddlywebplugins.tiddlyspace.csrf import CSRFProtector
 from tiddlywebplugins.prettyerror import PrettyHTTPExceptor
 
 import tiddlywebplugins.status
 
 
-__version__ = '0.9.45'
+__version__ = '0.9.46'
 
 
 def init(config):
@@ -140,8 +140,8 @@ def init(config):
                     config['server_request_filters'].
                     index(ControlView) + 1, DropPrivs)
 
-        if CsrfProtector not in config['server_request_filters']:
-            config['server_request_filters'].append(CsrfProtector)
+        if CSRFProtector not in config['server_request_filters']:
+            config['server_request_filters'].append(CSRFProtector)
 
         if AllowOrigin not in config['server_response_filters']:
             config['server_response_filters'].insert(

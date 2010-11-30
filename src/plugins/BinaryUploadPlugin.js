@@ -1,10 +1,11 @@
 /***
 |''Name''|BinaryUploadPlugin|
-|''Version''|0.3.12|
+|''Version''|0.3.13|
 |''Author''|Ben Gillies and Jon Robson|
 |''Type''|plugin|
 |''Source''|http://github.com/TiddlySpace/tiddlyspace/raw/master/src/plugins/BinaryUploadPlugin.js|
 |''Description''|Upload a binary file to TiddlyWeb|
+|''CoreVersion''|2.6.1|
 |''Requires''|TiddlySpaceConfig|
 !Usage
 {{{
@@ -24,6 +25,7 @@ tiddlywebplugins.form
 (function($) {
 
 var macro = config.macros.binaryUpload = {
+	defaultWorkspace: config.defaultCustomFields["server.workspace"],
 	locale: {
 		titleDefaultValue: "Please enter a title...",
 		tagsDefaultValue: "Please enter some tags...",
@@ -47,14 +49,14 @@ var macro = config.macros.binaryUpload = {
 			var userDefault = options[fieldName];
 			var defaultValue = userDefault ? userDefault[0] : false;
 			if(includeFields[fieldName] || defaultValue) {
-				var localeDefault = locale["%0DefaultValue".format([fieldName])];
+				var localeDefault = locale["%0DefaultValue".format(fieldName)];
 				var className = defaultValue ? "userInput" : "userInput notEdited";
 				var inputEl;
 				var val = defaultValue || localeDefault || "";
-				var iContainer = $("<div />").addClass("binaryUpload%0".format([fieldName])).
+				var iContainer = $("<div />").addClass("binaryUpload%0".format(fieldName)).
 					appendTo(container);
 				if(defaultValue && !includeFields[fieldName]) {
-					var label = locale["%0Prefix".format([fieldName])];
+					var label = locale["%0Prefix".format(fieldName)];
 					$("<span />").text(label).appendTo(iContainer);
 					$("<span />").addClass("disabledInput").text(val).appendTo(iContainer);
 					inputEl = $("<input />").attr("type", "hidden");
@@ -62,7 +64,7 @@ var macro = config.macros.binaryUpload = {
 					inputEl = $("<input />").attr("type", "text");
 				}
 				inputEl.attr("name", fieldName).
-					addClass("%0Edit".format([fieldName])).
+					addClass("%0Edit".format(fieldName)).
 					val(val).addClass(className).appendTo(iContainer);
 			}
 		}
@@ -75,7 +77,7 @@ var macro = config.macros.binaryUpload = {
 		return fileName;
 	},
 	errorHandler: function(fileName) {
-		displayMessage("upload of file %0 failed".format([fileName]));
+		displayMessage("upload of file %0 failed".format(fileName));
 	},
 	uploadFile: function(place, baseURL, workspace, options) {
 		var pleaseWait = $(".uploadProgress", place);
@@ -90,10 +92,10 @@ var macro = config.macros.binaryUpload = {
 		$("input[name=title]", place).val(fileName);
 		// we need to go somewhere afterwards to ensure the onload event triggers
 		var redirectTo = "/%0/tiddlers.txt?select=title:%1".
-			format([workspace, fileName]);
+			format(workspace, fileName);
 		var token = config.extensions.tiddlyspace.getCsrfToken();
 		var action = "%0?csrf_token=%1&redirect=%2"
-			.format([baseURL, token, redirectTo]);
+			.format(baseURL, token, redirectTo);
 		form[0].action = action; // dont use jquery to work with ie
 		form[0].target = iframeName;
 		// do not refactor following line... won't work in IE6 otherwise
@@ -123,20 +125,20 @@ var macro = config.macros.binaryUpload = {
 		options.callback = options.callback ? options.callback :
 			function(place, fileName, workspace, baseurl) {
 				macro.displayFile(place, fileName, workspace);
-				displayMessage(locale.loadSuccess.format([fileName]));
+				displayMessage(locale.loadSuccess.format(fileName));
 				$("input[type=text]", place).val("");
 			};
 		var defaults = config.defaultCustomFields;
 		place = $("<div />").addClass("container").appendTo(place)[0];
-		var workspace = bag ? "bags/%0".format([bag]) : defaults["server.workspace"];
+		var workspace = bag ? "bags/%0".format(bag) : macro.defaultWorkspace;
 		var baseURL = defaults["server.host"];
 		baseURL += (baseURL[baseURL.length - 1] !== "/") ? "/" : "";
-		baseURL = "%0%1/tiddlers".format([baseURL, workspace]);
+		baseURL = "%0%1/tiddlers".format(baseURL, workspace);
 		//create the upload form, complete with invisible iframe
-		var iframeName = "binaryUploadiframe%0".format([Math.random()]);
+		var iframeName = "binaryUploadiframe%0".format(Math.random());
 		// do not refactor following line of code to work in IE6.
 		var form = $('<form action="%0" method="POST" enctype="multipart/form-data" />'.
-					format([baseURL])).addClass("binaryUploadForm").
+					format(baseURL)).addClass("binaryUploadForm").
 			attr("method", "POST").attr("enctype", "multipart/form-data").appendTo(place)[0];
 		macro.renderInputFields(form, options);
 		$(form).
@@ -194,28 +196,33 @@ var macro = config.macros.binaryUpload = {
 				story.displayTiddler(place, title);
 				var image = config.macros.image;
 				if(image && image.refreshImage) {
-					image.refreshImage("/%0/tiddlers/%1".format([workspace, title]));
+					image.refreshImage("/%0/tiddlers/%1".format(workspace, title));
 					image.refreshImage(title);
-					image.refreshImage("/%0".format([title]));
-					image.refreshImage("%0/%1/tiddlers/%2".format([config.extensions.tiddlyweb.host, workspace, title]));
+					image.refreshImage("/%0".format(title));
+					image.refreshImage("%0/%1/tiddlers/%2".format(config.extensions.tiddlyweb.host, workspace, title));
 				}
 			} else {
-				displayMessage(locale.loadError.format([title]));
+				displayMessage(locale.loadError.format(title));
 			}
 		});
 	}
 };
 
 if(config.extensions.tiddlyspace) {
+	var currentSpace = config.extensions.tiddlyspace.currentSpace.name;
 	config.macros.binaryUploadPublic = {
 		handler: function(place, macroName, params, wikifier, paramString, tiddler) {
 			var options = paramString.parseParams(null, null, true)[0];
 			var bag = "%0_public".
-				format([config.extensions.tiddlyspace.currentSpace.name]);
+				format(currentSpace);
 			options.bag = bag;
 			macro.createUploadForm(place, options);
 		}
 	};
+	// TODO: refactor to use getCurrentWorkspace
+	var suffix = config.options.chkPrivateMode ? "private" : "public";
+	config.macros.binaryUpload.defaultWorkspace = "bags/%0_%1".format(currentSpace, suffix);
+	config.messages.privacySetting = suffix;
 }
 
 })(jQuery);
