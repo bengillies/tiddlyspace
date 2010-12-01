@@ -18,8 +18,6 @@ twa._deleteTiddler = twa.deleteTiddler;
 
 //get the old revisions off the server, put them in the archive bag, then delete
 twa.deleteTiddler = function(tiddler, context, userParams, callback) {
-	//set the deleteTiddler method of the current instance to actually delete
-	this.deleteTiddler = twa._deleteTiddler;
 	var archiveBag = "%0_archive".format([ts.currentSpace.name]);
 
 	var from = {
@@ -32,8 +30,12 @@ twa.deleteTiddler = function(tiddler, context, userParams, callback) {
 		workspace: "bags/%0".format([archiveBag])
 	};
 
-	this.moveTiddler(from, to, context, userParams, callback);
-}
+	//we want the delete inside moveTiddler to actually delete...
+	var adaptorWithDelete = new config.adaptors.tiddlyweb();
+	adaptorWithDelete.deleteTiddler = twa._deleteTiddler;
+
+	adaptorWithDelete.moveTiddler(from, to, context, userParams, callback);
+};
 
 })(jQuery);
 //}}}
