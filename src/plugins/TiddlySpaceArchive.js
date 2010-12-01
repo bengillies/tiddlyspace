@@ -34,7 +34,10 @@ twa.deleteTiddler = function(tiddler, context, userParams, callback) {
 	var adaptorWithDelete = new config.adaptors.tiddlyweb();
 	adaptorWithDelete.deleteTiddler = twa._deleteTiddler;
 
-	adaptorWithDelete.moveTiddler(from, to, context, userParams, callback);
+	var result = adaptorWithDelete.moveTiddler(from, to, context, userParams,
+		callback);
+
+	return (typeof result == string) ? result : true;
 };
 
 })(jQuery);
