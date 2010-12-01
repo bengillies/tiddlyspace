@@ -9,3 +9,4 @@ tiddler: TiddlySpaceToolbar.js
 tiddler: ToggleTiddlerPrivacyPlugin.js
 tiddler: TiddlySpaceListPlugin.js
 tiddler: TiddlySpaceViewTypes.js
+tiddler: TiddlySpaceArchive.js
